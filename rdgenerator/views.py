@@ -39,6 +39,7 @@ def generator_view(request):
             apiServer = form.cleaned_data['apiServer']
             urlLink = form.cleaned_data['urlLink']
             downloadLink = form.cleaned_data['downloadLink']
+            updateCheckUrl = form.cleaned_data['updateCheckUrl']
             if not server:
                 server = 'rs-ny.rustdesk.com' #default rustdesk server
             if not key:
@@ -49,6 +50,8 @@ def generator_view(request):
                 urlLink = "https://rustdesk.com"
             if not downloadLink:
                 downloadLink = "https://rustdesk.com/download"
+            if not updateCheckUrl:
+                updateCheckUrl = "https://api.rustdesk.com/version/latest"
             direction = form.cleaned_data['direction']
             installation = form.cleaned_data['installation']
             settings = form.cleaned_data['settings']
@@ -266,6 +269,7 @@ def generator_view(request):
                 "genurl":_settings.GENURL,
                 "urlLink":urlLink,
                 "downloadLink":downloadLink,
+                "updateCheckUrl":updateCheckUrl,
                 "delayFix": 'true' if delayFix else 'false',
                 "rdgen":'true',
                 "cycleMonitor": 'true' if cycleMonitor else 'false',
