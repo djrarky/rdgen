@@ -10,6 +10,7 @@ If you would like to host the generator yourself, see [here](setup.md)
 - Custom icon/logo
 - Set default settings for the client
 - Support for rustdesk advanced settings (https://rustdesk.com/docs/en/self-host/client-configuration/advanced-settings/)
+- Allow client auto-update
 
 ## Generate RustDesk clients from command line instead of using a web browser
 
