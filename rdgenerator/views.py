@@ -18,6 +18,11 @@ from .models import GithubRun
 from PIL import Image
 from urllib.parse import quote
 
+def get_public_base_url(request):
+    if _settings.GENURL:
+        return _settings.GENURL
+    return f"{_settings.PROTOCOL}://{request.get_host()}"
+
 def generator_view(request):
     if request.method == 'POST':
         form = GenerateForm(request.POST, request.FILES)
@@ -101,9 +106,7 @@ def generator_view(request):
             if not all(char.isascii() for char in appname):
                 appname = "rustdesk"
             myuuid = str(uuid.uuid4())
-            protocol = _settings.PROTOCOL
-            host = request.get_host()
-            full_url = f"{protocol}://{host}"
+            full_url = get_public_base_url(request)
             try:
                 iconfile = form.cleaned_data.get('iconfile')
                 if not iconfile:

@@ -19,7 +19,7 @@
    * In the left pane, click on Secrets and variables, then click Actions
    * Now click New repository secret
    * Set the Name to GENURL
-   * Set the Secret to https://rdgen.hostname.com (or whatever your server will be accessed from)
+   * Set the Secret to https://rdgen.hostname.com (or a subpath such as https://rustdesk.hostname.com/generator if you are hosting rdgen behind a shared domain)
    * Now click New repository secret again
    * Set the Name to ZIP_PASSWORD
    * Set the Secret to any password you want (use this in the next step as well) - generate a password by running: ```python3 -c 'import secrets; print(secrets.token_hex(100))'```
@@ -74,9 +74,10 @@
         * PROTOCOL="https" *optional - defaults to "https", change to "http" if you need to
         * REPONAME="rdgen" *optional - defaults to "rdgen", change this if you renamed the repo when you forked it
     * github secrets (setup on your github account for your rdgen repo):  
-        * GENURL="example.com:8000"  *this is the domain and port that you are
-          running rdgen on, needs to be accessible on the internet, depending
-          on how you have this setup the port may not be needed  
+        * GENURL="https://example.com:8000"  *this is the public URL that rdgen
+          is accessible from. It can include a path prefix such as
+          `https://rustdesk.example.com/generator` when rdgen is hosted behind a
+          shared domain. Depending on your setup the port may not be needed.
 
 ```
 # Open to the directory you want to install rdgen (change /opt to wherever you want)  

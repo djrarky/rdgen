@@ -8,7 +8,7 @@ services:
       SECRET_KEY: "django-insecure-!(t-!f#6g#sr%yfded9(xha)g+=!6craeez^cp+*&bz_7vdk61"
       GHUSER: "github_username"
       GHBEARER: "github_access_token"
-      GENURL: "accessible_url_of_server"
+      GENURL: "accessible_url_of_server_or_subpath"
       ZIP_PASSWORD: ""
       GHBRANCH: "master"
       PROTOCOL: "https"

@@ -8,6 +8,7 @@
 #   /latest/...        -> stable human-friendly download links
 #   /tag/...           -> optional human fallback page
 #   /version/latest    -> JSON used by RustDesk update checks
+#   /generator/...     -> rdgen UI + GitHub Actions callback endpoints
 #   /admin             -> friendly admin entrypoint
 #   /admin/...         -> rustdesk-api admin UI/docs
 #
@@ -26,6 +27,7 @@
 #   RUSTDESK_UPDATE_ROOT=/srv/rustdesk-updates
 #   RUSTDESK_LATEST_VERSION=1.4.6
 #   RUSTDESK_LINUX_FILENAME=rustdesk
+#   RUSTDESK_RDGEN_UPSTREAM=rdgen:8000
 #   RUSTDESK_API_UPSTREAM=rustdesk-api:21114
 #
 # Suggested static file layout under $RUSTDESK_UPDATE_ROOT:
@@ -67,6 +69,15 @@ JSON 200
         # Friendly admin entrypoint.
         @admin_root path /admin
         redir @admin_root /admin/ 308
+
+        # Friendly rdgen entrypoint. Set GENURL to https://your-host/generator
+        # so rdgen emits /generator/... URLs for its UI and callbacks.
+        @rdgen_root path /generator
+        redir @rdgen_root /generator/ 308
+
+        handle_path /generator/* {
+            reverse_proxy {$RUSTDESK_RDGEN_UPSTREAM:rdgen:8000}
+        }
 
         # Keep admin docs on their native public path.
         handle /admin/swagger* {

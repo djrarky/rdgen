@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 import os
+from urllib.parse import urlsplit
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -23,12 +24,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY','django-insecure-!(t-!f#6g#sr%yfded9(xha)g+=!6craeez^cp+*&bz_7vdk61')
 GHUSER = os.environ.get("GHUSER", '')
 GHBEARER = os.environ.get("GHBEARER", '')
-GENURL = os.environ.get("GENURL", '')
+GENURL = os.environ.get("GENURL", '').rstrip('/')
 GHBRANCH = os.environ.get("GHBRANCH",'master')
 ZIP_PASSWORD = os.environ.get("ZIP_PASSWORD",'insecure')
 PROTOCOL = os.environ.get("PROTOCOL", 'https')
 REPONAME = os.environ.get("REPONAME", 'rdgen')
 SH_SECRET = os.environ.get('SH_SECRET', 'secret')
+GENURL_PATH = urlsplit(GENURL).path.rstrip('/') if GENURL else ''
+FORCE_SCRIPT_NAME = GENURL_PATH or None
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
