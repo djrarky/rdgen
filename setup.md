@@ -38,6 +38,7 @@
 1. First you need to set up a Windows computer that can build rustdesk
 2. Once you can build rustdesk, follow github instructions for setting up a self hosted github runner
 3. Now you need to add an environment variable SH_SECRET, which has a key/password that you will need to send to the server
+   * If SH_SECRET is blank, self-hosted Windows runner mode is disabled and rdgen will use the normal GitHub-hosted Windows workflow.
 4. Save a json configuration file from your rdgen web ui
 5. Use the [rdgen-cli] (https://github.com/AlekseyLapunov/rdgen-cli) to submit your json configuration with the added key "sh_secret_field" with the value matching your SH_SECRET
 
