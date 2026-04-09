@@ -8,6 +8,11 @@ on:
     tags:
       - 'v*.*.*'
 
+env:
+  # Docker's released action tags still declare node20, so opt this workflow
+  # into the runner's Node 24 compatibility mode ahead of the default switch.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   build:
     runs-on: ubuntu-latest
