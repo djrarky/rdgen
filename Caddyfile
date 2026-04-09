@@ -1,0 +1,112 @@
+# RustDesk public site + rustdesk-api reverse proxy
+#
+# We only claim the exact public update/download routes we need here:
+#   /                  -> custom downloads page (index.html)
+#   /index.html        -> custom downloads page
+#   /assets/...        -> CSS, JS, images for the downloads page
+#   /download/...      -> versioned binaries
+#   /latest/...        -> stable human-friendly download links
+#   /tag/...           -> optional human fallback page
+#   /version/latest    -> JSON used by RustDesk update checks
+#   /admin             -> friendly admin entrypoint
+#   /admin/...         -> rustdesk-api admin UI/docs
+#
+# Everything else is passed through to rustdesk-api untouched. That keeps
+# RustDesk API/webclient routes working without us having to mirror all of
+# rustdesk-api's paths in Caddy.
+#
+# Notes:
+# - rustdesk-api natively serves the admin SPA at /_admin/.
+#   This Caddyfile exposes it at /admin/ while allowing backend redirects to
+#   /_admin/ to keep working through the final reverse proxy fallback.
+# - RustDesk update discovery does NOT read index.html. It calls /version/latest,
+#   reads the returned tag URL, then rewrites /tag/<version> -> /download/<version>.
+#
+# Container-friendly env vars:
+#   RUSTDESK_UPDATE_ROOT=/srv/rustdesk-updates
+#   RUSTDESK_LATEST_VERSION=1.4.6
+#   RUSTDESK_LINUX_FILENAME=rustdesk
+#   RUSTDESK_API_UPSTREAM=rustdesk-api:21114
+#
+# Suggested static file layout under $RUSTDESK_UPDATE_ROOT:
+#   index.html
+#   assets/
+#     site.css
+#     logo.png
+#   download/1.4.6/rustdesk-1.4.6-x86_64.exe
+#   download/1.4.6/rustdesk-1.4.6-x86_64.msi
+#   download/1.4.6/rustdesk-1.4.6-x86_64.dmg
+#   download/1.4.6/rustdesk-1.4.6-aarch64.dmg
+#   download/1.4.6/rustdesk-x86_64.deb
+#   download/1.4.6/rustdesk-x86_64.AppImage
+
+rustdesk.example.uk {
+    import external_tls
+    encode zstd gzip
+
+    route {
+        @version_check {
+            path /version/latest
+            method GET POST
+        }
+        handle @version_check {
+            header Content-Type application/json
+            respond <<JSON
+{"url":"https://rustdesk.example.uk/tag/{$RUSTDESK_LATEST_VERSION:1.4.6}"}
+JSON 200
+        }
+
+        # Stable latest links for people. Link to these from index.html.
+        redir /latest/windows-x86_64.exe /download/{$RUSTDESK_LATEST_VERSION:1.4.6}/rustdesk-{$RUSTDESK_LATEST_VERSION:1.4.6}-x86_64.exe 302
+        redir /latest/windows-x86_64.msi /download/{$RUSTDESK_LATEST_VERSION:1.4.6}/rustdesk-{$RUSTDESK_LATEST_VERSION:1.4.6}-x86_64.msi 302
+        redir /latest/macos-x86_64.dmg /download/{$RUSTDESK_LATEST_VERSION:1.4.6}/rustdesk-{$RUSTDESK_LATEST_VERSION:1.4.6}-x86_64.dmg 302
+        redir /latest/macos-aarch64.dmg /download/{$RUSTDESK_LATEST_VERSION:1.4.6}/rustdesk-{$RUSTDESK_LATEST_VERSION:1.4.6}-aarch64.dmg 302
+        redir /latest/linux-x86_64.deb /download/{$RUSTDESK_LATEST_VERSION:1.4.6}/{$RUSTDESK_LINUX_FILENAME:rustdesk}-x86_64.deb 302
+        redir /latest/linux-x86_64.AppImage /download/{$RUSTDESK_LATEST_VERSION:1.4.6}/{$RUSTDESK_LINUX_FILENAME:rustdesk}-x86_64.AppImage 302
+
+        # Friendly admin entrypoint.
+        @admin_root path /admin
+        redir @admin_root /admin/ 308
+
+        # Keep admin docs on their native public path.
+        handle /admin/swagger* {
+            reverse_proxy {$RUSTDESK_API_UPSTREAM:rustdesk-api:21114}
+        }
+
+        # Expose the rustdesk-api admin SPA at /admin/.
+        handle_path /admin/* {
+            rewrite * /_admin{path}
+            reverse_proxy {$RUSTDESK_API_UPSTREAM:rustdesk-api:21114}
+        }
+
+        # Public downloads page and static assets/files.
+        @downloads_home path / /index.html
+        handle @downloads_home {
+            root * {$RUSTDESK_UPDATE_ROOT:/srv/rustdesk-updates}
+            rewrite * /index.html
+            file_server
+        }
+
+        handle /assets/* {
+            root * {$RUSTDESK_UPDATE_ROOT:/srv/rustdesk-updates}
+            file_server
+        }
+
+        handle /download/* {
+            root * {$RUSTDESK_UPDATE_ROOT:/srv/rustdesk-updates}
+            file_server
+        }
+
+        # Optional human fallback if /tag/<version> is opened directly.
+        handle /tag/* {
+            root * {$RUSTDESK_UPDATE_ROOT:/srv/rustdesk-updates}
+            rewrite * /index.html
+            file_server
+        }
+
+        # Everything else belongs to rustdesk-api.
+        handle {
+            reverse_proxy {$RUSTDESK_API_UPSTREAM:rustdesk-api:21114}
+        }
+    }
+}
