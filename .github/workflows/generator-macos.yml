@@ -32,7 +32,7 @@ env:
   VCPKG_COMMIT_ID: "120deac3062162151622ca4860575a33844ba10b"
   ARMV7_VCPKG_COMMIT_ID: "6f29f12e82a8293156836ad81cc9bf5af41fe836"
   VERSION: "${{ inputs.version }}"
-  NDK_VERSION: "r27c"
+  NDK_VERSION: "r28c"
   #signing keys env variable checks
   ANDROID_SIGNING_KEY: "${{ secrets.ANDROID_SIGNING_KEY }}"
   MACOS_P12_BASE64: "${{ secrets.MACOS_P12_BASE64 }}"
@@ -145,11 +145,18 @@ jobs:
           # MACSTUFF Update AppInfo.xcconfig
           sed -i '' -e 's|PRODUCT_NAME = .*|PRODUCT_NAME = ${{ env.appname }}|' ./flutter/macos/Runner/Configs/AppInfo.xcconfig
           sed -i '' -e 's|PRODUCT_BUNDLE_IDENTIFIER = .*|PRODUCT_BUNDLE_IDENTIFIER = com.${{ env.appname }}.app|' ./flutter/macos/Runner/Configs/AppInfo.xcconfig
-          sed -i '' -e 's|Purslane Ltd.|${{ env.appname }}|' ./flutter/macos/Runner/Configs/AppInfo.xcconfig
+          sed -i '' -e 's|Purslane Tech Pte. Ltd.|${{ env.compname }}|' ./flutter/macos/Runner/Configs/AppInfo.xcconfig
+          sed -i '' -e 's|Purslane Ltd.|${{ env.compname }}|' ./flutter/macos/Runner/Configs/AppInfo.xcconfig
           # Keep DEVELOPMENT_TEAM if it exists, don't blank it out
 
-          sed -i -e 's|Purslane Ltd.|${{ env.appname }}|' ./Cargo.toml
-          sed -i -e 's|Purslane Ltd|${{ env.appname }}|' ./libs/portable/Cargo.toml
+          sed -i -e 's|Purslane Tech Pte. Ltd.|${{ env.compname }}|' ./Cargo.toml
+          sed -i -e 's|Purslane Tech Pte. Ltd.|${{ env.compname }}|' ./libs/portable/Cargo.toml
+          sed -i -e 's|Purslane Tech Pte. Ltd.|${{ env.compname }}|' ./flutter/lib/desktop/pages/desktop_setting_page.dart
+          sed -i -e 's|Purslane Tech Pte. Ltd.|${{ env.compname }}|' ./src/main.rs
+          sed -i -e 's|Purslane Ltd.|${{ env.compname }}|' ./Cargo.toml
+          sed -i -e 's|Purslane Ltd.|${{ env.compname }}|' ./libs/portable/Cargo.toml
+          sed -i -e 's|Purslane Ltd.|${{ env.compname }}|' ./flutter/lib/desktop/pages/desktop_setting_page.dart
+          sed -i -e 's|Purslane Ltd|${{ env.compname }}|' ./src/main.rs
           
           # Update Xcode project settings
           sed -i '' -e 's/PRODUCT_NAME = "RustDesk"/PRODUCT_NAME = "${{ env.appname }}"/' ./flutter/macos/Runner.xcodeproj/project.pbxproj
@@ -186,6 +193,8 @@ jobs:
           sed -i -e 's|https://rustdesk.com/download|${{ env.downloadLink }}|' ./flutter/lib/desktop/pages/desktop_home_page.dart
           sed -i -e 's|https://rustdesk.com/download|${{ env.downloadLink }}|' ./flutter/lib/mobile/pages/connection_page.dart
           sed -i -e 's|https://rustdesk.com/download|${{ env.downloadLink }}|' ./src/ui/index.tis
+          sed -i -e 's|&download_url|"${{ env.downloadLink }}"|' ./src/updater.rs
+          sed -i -e 's|$downloadUrl/$downloadFile|${{ env.downloadLink }}|' ./flutter/lib/desktop/widgets/update_progress.dart
 
           # Update slogan
           #sed -i '' '/<key>NSHumanReadableCopyright<\/key>/{n;s/<string>.*<\/string>/<string>Copyright 2025 ${{ env.appname }}. All rights reserved.<\/string>/;}' ./flutter/macos/Runner/Info.plist
@@ -213,7 +222,7 @@ jobs:
           python allowCustom.py
           wget https://raw.githubusercontent.com/bryangerlach/rdgen/refs/heads/master/.github/patches/removeSetupServerTip.diff
           git apply removeSetupServerTip.diff
-            
+
           # Update pubspec.yaml with proper YAML formatting
           cp ./flutter/pubspec.yaml ./flutter/pubspec.yaml.bak
           echo "  archive: ^3.6.1" > ./flutter/temp_dependency.txt
@@ -290,7 +299,7 @@ jobs:
             -H "User-Agent: Mozilla/5.0" \
             "${{ env.iconlink_url }}/get_png?filename=${{ env.iconlink_file }}&uuid=${{ env.iconlink_uuid }}" \
             -o ./res/icon.png || wget --no-check-certificate -O ./res/icon.png "${{ env.iconlink_url }}/get_png?filename=${{ env.iconlink_file }}&uuid=${{ env.iconlink_uuid }}"
-            
+
           # Backup existing files (if they exist)
           [ -f "./res/32x32.png" ] && mv ./res/32x32.png ./res/32x32.png.bak
           [ -f "./res/64x64.png" ] && mv ./res/64x64.png ./res/64x64.png.bak
@@ -299,7 +308,7 @@ jobs:
           [ -f "./flutter/assets/icon.png" ] && mv ./flutter/assets/icon.png ./flutter/assets/icon.png.bak
           [ -f "./flutter/assets/icon.svg" ] && mv ./flutter/assets/icon.svg ./flutter/assets/icon.svg.bak
           [ -f "./rustdesk/data/flutter_assets/assets/icon.svg" ] && mv ./rustdesk/data/flutter_assets/assets/icon.svg ./rustdesk/data/flutter_assets/assets/icon.svg.bak
-            
+
           # Create standard app icons
           magick ./res/icon.png -resize 32x32 ./res/32x32.png
           magick ./res/icon.png -resize 64x64 ./res/64x64.png
@@ -425,13 +434,6 @@ jobs:
         shell: bash
         run: |
           sed -i -e 's|!key.is_empty()|false|' ./src/client.rs
-
-      - name: add cycle monitors to toolbar
-        continue-on-error: true
-        if: env.cycleMonitor == 'true'
-        run: |
-          wget https://raw.githubusercontent.com/bryangerlach/rdgen/refs/heads/master/.github/patches/cycle_monitor.diff
-          git apply cycle_monitor.diff
   
       - name: use X for offline display instead of orange circle
         continue-on-error: true
@@ -604,7 +606,7 @@ jobs:
                     --code-signature-flags runtime "${{ env.appname }}.app/Contents/MacOS/$ACTUAL_EXECUTABLE"
                 fi
               fi
-              
+
               echo "Signing frameworks..."
               find "${{ env.appname }}.app/Contents/Frameworks" -type f -not -name ".*" -exec \
                 rcodesign sign --p12-file certificate.p12 --p12-password "${{ secrets.MACOS_P12_PASSWORD }}" \
@@ -620,6 +622,32 @@ jobs:
             
             # Clean up
             rm certificate.p12 
+
+      - name: Ad-hoc Sign macOS app bundle (Fallback)
+        if: env.MACOS_P12_BASE64 == '' || env.MACOS_P12_BASE64 == null
+        shell: bash
+        run: |
+            cd flutter/build/macos/Build/Products/Release
+
+            # Renombrar RustDesk.app al nombre de la marca blanca si aplica
+            if [ -d "RustDesk.app" ]; then
+              mv "RustDesk.app" "${{ env.appname }}.app"
+              echo "RustDesk.app renombrado a ${{ env.appname }}.app"
+            fi
+
+            TARGET_APP="${{ env.appname }}.app"
+
+            if [ -d "$TARGET_APP" ]; then
+              echo "Limpiando atributos extendidos..."
+              xattr -cr "$TARGET_APP" || true
+
+              echo "Re-firmando $TARGET_APP de forma Ad-Hoc y recursiva..."
+              codesign --force --deep --sign - "$TARGET_APP"
+              echo "Firma Ad-Hoc completada con exito."
+            else
+              echo "Error: No se encontro la app bundle en $TARGET_APP para firmar."
+              exit 1
+            fi
 
       - name: Create DMG
         run: |

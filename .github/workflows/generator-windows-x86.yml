@@ -37,7 +37,7 @@ env:
   VCPKG_COMMIT_ID: "120deac3062162151622ca4860575a33844ba10b"
   ARMV7_VCPKG_COMMIT_ID: "6f29f12e82a8293156836ad81cc9bf5af41fe836" # 2025.01.13, got "/opt/artifacts/vcpkg/vcpkg: No such file or directory" with latest version
   VERSION: "${{ inputs.version }}"
-  NDK_VERSION: "r27c"
+  NDK_VERSION: "r28c"
   #signing keys env variable checks
   ANDROID_SIGNING_KEY: "${{ secrets.ANDROID_SIGNING_KEY }}"
   MACOS_P12_BASE64: "${{ secrets.MACOS_P12_BASE64 }}"
@@ -175,12 +175,14 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
-          sed -i -e 's|PURSLANE|${{ env.compname }}|' ./res/msi/preprocess.py
-          sed -i -e 's|Purslane Ltd|${{ env.compname }}|' ./res/msi/preprocess.py
-          sed -i -e 's|Copyright &copy; 2025 Purslane Ltd.|Copyright \&copy; 2025 ${{ env.compname }}|' ./src/ui/index.tis
-          sed -i -e 's|Purslane Ltd|${{ env.compname }}|' ./Cargo.toml
-          sed -i -e 's|Purslane Ltd|${{ env.compname }}|' ./libs/portable/Cargo.toml
-          sed -i -e 's|Purslane Ltd.|${{ env.compname }}|' ./res/setup.nsi
+          sed -i -e 's|Purslane Tech Pte. Ltd.|${{ env.compname }}|' ./src/ui/index.tis
+          sed -i -e 's|Purslane Tech Pte. Ltd.|${{ env.compname }}|' ./Cargo.toml
+          sed -i -e 's|Purslane Tech Pte. Ltd.|${{ env.compname }}|' ./libs/portable/Cargo.toml
+          sed -i -e 's|Purslane Tech Pte. Ltd.|${{ env.compname }}|' ./src/main.rs
+          sed -i -e 's|Purslane Ltd.|${{ env.compname }}|' ./src/ui/index.tis
+          sed -i -e 's|Purslane Ltd.|${{ env.compname }}|' ./Cargo.toml
+          sed -i -e 's|Purslane Ltd.|${{ env.compname }}|' ./libs/portable/Cargo.toml
+          sed -i -e 's|Purslane Ltd|${{ env.compname }}|' ./src/main.rs
              
       - name: change url to custom
         if: env.urlLink != 'https://rustdesk.com'
@@ -198,6 +200,7 @@ jobs:
         shell: bash
         run: |
           sed -i -e 's|https://rustdesk.com/download|${{ env.downloadLink }}|' ./src/ui/index.tis
+          sed -i -e 's|&download_url|"${{ env.downloadLink }}"|' ./src/updater.rs
 
       - name: set server, key, and apiserver
         continue-on-error: true
@@ -215,8 +218,9 @@ jobs:
       - name: allow custom.txt
         uses: nick-fields/retry@v3
         with:
-          timeout_minutes: 1
+          timeout_minutes: 5
           max_attempts: 3
+          retry_wait_seconds: 15
           shell: pwsh
           continue_on_error: true
           command: |
@@ -279,8 +283,9 @@ jobs:
         if: ${{ env.iconlink_url != 'false' }}
         uses: nick-fields/retry@v3
         with:
-          timeout_minutes: 1
+          timeout_minutes: 5
           max_attempts: 3
+          retry_wait_seconds: 15
           shell: pwsh
           command: |
             Invoke-WebRequest -Uri ${{ env.iconlink_url }}/get_png?filename=${{ env.iconlink_file }}"&"uuid=${{ env.iconlink_uuid }} -OutFile ./res/icon.png 
